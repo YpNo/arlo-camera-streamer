@@ -1,12 +1,21 @@
+"""Camera Class to manage Arlo's Camera devices."""
+
 import subprocess
 import logging
 import asyncio
 import shlex
 import os
-from device import Device
 from decouple import config
+from device import Device
 
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config("DEBUG", default=False, cast=bool)
+
+# Initialize logging
+logging.basicConfig(
+    level=logging.DEBUG if DEBUG else logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 class Camera(Device):
@@ -25,11 +34,12 @@ class Camera(Device):
         current ffmpeg stream (idle or active)
     """
 
-    # Possible states
-    STATES = ['idle', 'streaming']
+    # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, arlo_camera, ffmpeg_out,
-                 motion_timeout, status_interval):
+    # Possible states
+    STATES = ["idle", "streaming"]
+
+    def __init__(self, arlo_camera, ffmpeg_out, motion_timeout, status_interval):
         super().__init__(arlo_camera, status_interval)
         self.ffmpeg_out = shlex.split(ffmpeg_out.format(name=self.name))
         self.timeout = motion_timeout
@@ -42,7 +52,7 @@ class Camera(Device):
         self.proxy_reader, self.proxy_writer = os.pipe()
         self._pictures = asyncio.Queue()
         self._listen_pictures = False
-        logging.info(f"Camera added: {self.name}")
+        logger.info("Camera added: %s", self.name)
 
     async def run(self):
         """
@@ -52,18 +62,18 @@ class Camera(Device):
         """
         while self._arlo.is_unavailable:
             await asyncio.sleep(5)
-        await self.set_state('idle')
+        await self.set_state("idle")
         asyncio.create_task(self._start_proxy_stream())
         await super().run()
 
     # Distributes events to correct handler
     async def on_event(self, attr, value):
         match attr:
-            case 'motionDetected':
+            case "motionDetected":
                 await self.on_motion(value)
-            case 'activityState':
+            case "activityState":
                 await self.on_arlo_state(value)
-            case 'presignedLastImageData':
+            case "presignedLastImageData":
                 if self._listen_pictures:
                     self.put_picture(value)
             case _:
@@ -77,48 +87,51 @@ class Camera(Device):
         """
         self.motion = motion
         self._motion_event.set()
-        logging.info(f"{self.name} motion: {motion}")
+        logger.info("%s motion: %s", self.name, motion)
         if motion:
-            await self.set_state('streaming')
+            await self.set_state("streaming")
 
         else:
             if self._timeout_task:
                 self._timeout_task.cancel()
             if not motion:
-                self._timeout_task = asyncio.create_task(
-                    self._stream_timeout()
-                    )
+                self._timeout_task = asyncio.create_task(self._stream_timeout())
 
     async def on_arlo_state(self, state):
         """
         Handles pyaarlo state change, either requests stream or handles
         running stream.
         """
-        if state == 'idle':
-            if self.get_state() == 'streaming':
+        if state == "idle":
+            if self.get_state() == "streaming":
                 await self._start_stream()
-        elif state == 'userStreamActive' and self.get_state() != 'streaming':
-            await self.set_state('streaming')
+        elif state == "userStreamActive" and self.get_state() != "streaming":
+            await self.set_state("streaming")
 
     # Set state in accordance to STATES
     async def set_state(self, new_state):
+        """
+        Setting the local state when pyaarlo state change.
+        Calling the _on_state_change function if the state has changed.
+        """
         if new_state in self.STATES and new_state != self._state:
             self._state = new_state
-            logging.info(f"{self.name} state: {new_state}")
+            logger.info("%s state: %s", self.name, new_state)
             await self._on_state_change(new_state)
 
     def get_state(self):
+        """Retrun the current state."""
         return self._state
 
     # Handle internal state change, stop or start stream
     async def _on_state_change(self, new_state):
         self._state_event.set()
         match new_state:
-            case 'idle':
+            case "idle":
                 self.stop_stream()
                 asyncio.create_task(self._start_idle_stream())
 
-            case 'streaming':
+            case "streaming":
                 await self._start_stream()
 
     async def _start_proxy_stream(self):
@@ -129,24 +142,23 @@ class Camera(Device):
         exit_code = 1
         while exit_code > 0:
             self.proxy_stream = await asyncio.create_subprocess_exec(
-                *(['ffmpeg', '-i', 'pipe:'] + self.ffmpeg_out),
+                *(["ffmpeg", "-i", "pipe:"] + self.ffmpeg_out),
                 stdin=self.proxy_reader,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL
-                )
+                stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL,
+            )
 
             if DEBUG:
-                asyncio.create_task(
-                    self._log_stderr(self.proxy_stream, 'proxy_stream')
-                    )
+                asyncio.create_task(self._log_stderr(self.proxy_stream, "proxy_stream"))
 
             exit_code = await self.proxy_stream.wait()
 
             if exit_code > 0:
-                logging.warning(
-                    f"Proxy stream for {self.name} exited unexpectedly "
-                    f"with code {exit_code}. Restarting..."
-                    )
+                logger.warning(
+                    "Proxy stream for %s exited unexpectedly with code %s. Restarting...",
+                    self.name,
+                    exit_code,
+                )
                 await asyncio.sleep(3)
 
     async def _start_idle_stream(self):
@@ -156,27 +168,43 @@ class Camera(Device):
         exit_code = 1
         while exit_code > 0:
             self.stream = await asyncio.create_subprocess_exec(
-                *['ffmpeg', '-re', '-stream_loop', '-1', '-i', 'idle.mp4',
-                  '-c:v', 'copy',
-                  '-c:a', 'libmp3lame', '-ar', '44100', '-b:a', '8k',
-                  '-bsf', 'dump_extra', '-f', 'mpegts', 'pipe:'],
+                *[
+                    "ffmpeg",
+                    "-re",
+                    "-stream_loop",
+                    "-1",
+                    "-i",
+                    "idle.mp4",
+                    "-c:v",
+                    "copy",
+                    "-c:a",
+                    "libmp3lame",
+                    "-ar",
+                    "44100",
+                    "-b:a",
+                    "8k",
+                    "-bsf",
+                    "dump_extra",
+                    "-f",
+                    "mpegts",
+                    "pipe:",
+                ],
                 stdin=subprocess.DEVNULL,
                 stdout=self.proxy_writer,
-                stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL
-                )
+                stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL,
+            )
 
             if DEBUG:
-                asyncio.create_task(
-                    self._log_stderr(self.stream, 'idle_stream')
-                    )
+                asyncio.create_task(self._log_stderr(self.stream, "idle_stream"))
 
             exit_code = await self.stream.wait()
 
             if exit_code > 0:
-                logging.warning(
-                    f"Idle stream for {self.name} exited unexpectedly "
-                    f"with code {exit_code}. Restarting..."
-                    )
+                logger.warning(
+                    "Idle stream for %s exited unexpectedly with code %s. Restarting...",
+                    self.name,
+                    exit_code,
+                )
                 await asyncio.sleep(3)
 
     async def _start_stream(self):
@@ -184,28 +212,38 @@ class Camera(Device):
         Request stream, grab it, kill idle stream and start new ffmpeg instance
         writing to proxy.
         """
-        stream = await self.event_loop.run_in_executor(None,
-                                                       self._arlo.get_stream)
+        stream = await self.event_loop.run_in_executor(None, self._arlo.get_stream)
         if stream:
             self.stop_stream()
 
             self.stream = await asyncio.create_subprocess_exec(
-                *['ffmpeg', '-i', stream, '-c:v', 'copy',
-                  '-c:a', 'libmp3lame', '-ar', '44100',
-                  '-bsf', 'dump_extra', '-f', 'mpegts', 'pipe:'],
+                *[
+                    "ffmpeg",
+                    "-i",
+                    stream,
+                    "-c:v",
+                    "copy",
+                    "-c:a",
+                    "libmp3lame",
+                    "-ar",
+                    "44100",
+                    "-bsf",
+                    "dump_extra",
+                    "-f",
+                    "mpegts",
+                    "pipe:",
+                ],
                 stdin=subprocess.DEVNULL,
                 stdout=self.proxy_writer,
-                stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL
-                )
+                stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL,
+            )
 
             if DEBUG:
-                asyncio.create_task(
-                    self._log_stderr(self.stream, 'live_stream')
-                    )
+                asyncio.create_task(self._log_stderr(self.stream, "live_stream"))
 
     async def _stream_timeout(self):
         await asyncio.sleep(self.timeout)
-        await self.set_state('idle')
+        await self.set_state("idle")
 
     def stop_stream(self):
         """
@@ -233,13 +271,10 @@ class Camera(Device):
         try:
             self._pictures.put_nowait(pic)
         except asyncio.QueueFull:
-            logging.info("picture queue full, ignoring")
+            logger.info("picture queue full, ignoring")
 
     def get_status(self):
-        return {
-            "battery": self._arlo.battery_level,
-            "state": self.get_state()
-            }
+        return {"battery": self._arlo.battery_level, "state": self.get_state()}
 
     async def listen_motion(self):
         """
@@ -255,13 +290,12 @@ class Camera(Device):
         Handles incoming MQTT commands
         """
         match payload.upper():
-            case 'START':
-                await self.set_state('streaming')
-            case 'STOP':
-                await self.set_state('idle')
-            case 'SNAPSHOT':
-                await self.event_loop.run_in_executor(
-                        None, self._arlo.request_snapshot)
+            case "START":
+                await self.set_state("streaming")
+            case "STOP":
+                await self.set_state("idle")
+            case "SNAPSHOT":
+                await self.event_loop.run_in_executor(None, self._arlo.request_snapshot)
 
     async def _log_stderr(self, stream, label):
         """
@@ -271,9 +305,7 @@ class Camera(Device):
             try:
                 line = await stream.stderr.readline()
                 if line:
-                    logging.debug(
-                        f"{self.name} - {label}: {line.decode().strip()}"
-                        )
+                    logger.debug("%s - %s: %s", self.name, label, line.decode().strip())
                 else:
                     break
             except ValueError:
@@ -283,19 +315,24 @@ class Camera(Device):
         """
         Shutdown camera, wait for idle
         """
-        if self.get_state() != 'idle':
-            logging.info(f"{self.name} active, waiting...")
-            while self.get_state() != 'idle':
+        if self.get_state() != "idle":
+            logger.info("%s active, waiting...", self.name)
+            while self.get_state() != "idle":
                 await asyncio.sleep(1)
-        self.shutdown(None)
+        self.shutdown()
 
-    def shutdown(self, signal):
+    def shutdown(self):
         """
         Immediate shutdown
         """
-        logging.info(f"Shutting down {self.name}")
+        logger.info("Shutting down %s", self.name)
         for stream in [self.stream, self.proxy_stream]:
-            try:
-                stream.terminate()
-            except Exception:
-                pass
+            if stream:  # Check if stream exists
+                try:
+                    stream.terminate()
+                except ProcessLookupError:
+                    # Handle the specific case where the process is gone
+                    logger.debug("Process for %s already terminated.", self.name)
+                except AttributeError:
+                    # Handle the case when stream is None
+                    logger.debug("Stream for %s is not initialized.", self.name)
