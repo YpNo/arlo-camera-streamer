@@ -24,6 +24,7 @@ jobs:
           black: true
           version: "~= 24.8"
           black-args: "--config pyproject.toml"
+          src: "./"
 
       - name: Bandit
         uses: microsoft/action-python@0.7.0
