@@ -9,7 +9,6 @@ import aiomqtt  # pylint: disable=import-error
 from aiostream import stream  # pylint: disable=import-error
 from decouple import config  # pylint: disable=import-error
 
-DEBUG = config("DEBUG", default=False, cast=bool)
 MQTT_BROKER = config("MQTT_BROKER", cast=str, default="localhost")
 MQTT_PORT = config("MQTT_PORT", cast=int, default=1883)
 MQTT_USER = config("MQTT_USER", cast=str, default="arlo")
@@ -21,10 +20,27 @@ MQTT_TOPIC_CONTROL = config("MQTT_TOPIC_CONTROL", default="arlo/control/{name}")
 MQTT_TOPIC_STATUS = config("MQTT_TOPIC_STATUS", default="arlo/status/{name}")
 MQTT_TOPIC_MOTION = config("MQTT_TOPIC_MOTION", default="arlo/motion/{name}")
 
+DEBUG = config("DEBUG", default=False, cast=bool)
+
+# Initialize logging
 logging.basicConfig(
     level=logging.DEBUG if DEBUG else logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
+logger = logging.getLogger(__name__)
+
+# For PyRight issue which doesn't work with decouple
+env_params = {
+    "MQTT_BROKER": MQTT_BROKER,
+    "MQTT_PORT": MQTT_PORT,
+    "MQTT_USER": MQTT_USER,
+    "MQTT_PASS": MQTT_PASS,
+    "MQTT_RECONNECT_INTERVAL": MQTT_RECONNECT_INTERVAL,
+    "MQTT_TOPIC_PICTURE": MQTT_TOPIC_PICTURE,
+    "MQTT_TOPIC_CONTROL": MQTT_TOPIC_CONTROL,
+    "MQTT_TOPIC_STATUS": MQTT_TOPIC_STATUS,
+    "MQTT_TOPIC_MOTION": MQTT_TOPIC_MOTION,
+}
 
 
 async def mqtt_client(cameras, bases):
@@ -34,12 +50,12 @@ async def mqtt_client(cameras, bases):
     while True:
         try:
             async with aiomqtt.Client(
-                hostname=MQTT_BROKER,
-                port=MQTT_PORT,
-                username=MQTT_USER,
-                password=MQTT_PASS,
+                hostname=env_params["MQTT_BROKER"],
+                port=env_params["MQTT_PORT"],
+                username=env_params["MQTT_USER"],
+                password=env_params["MQTT_PASS"],
             ) as client:
-                logging.info("MQTT client connected to %s", MQTT_BROKER)
+                logger.info("MQTT client connected to %s", env_params["MQTT_BROKER"])
                 await asyncio.gather(
                     # Generators/Readers
                     mqtt_reader(client, cameras + bases),
@@ -48,8 +64,8 @@ async def mqtt_client(cameras, bases):
                     pic_streamer(client, cameras),
                 )
         except aiomqtt.MqttError as error:
-            logging.info('MQTT "%s". reconnecting.', error)
-            await asyncio.sleep(MQTT_RECONNECT_INTERVAL)
+            logger.info('MQTT "%s". reconnecting.', error)
+            await asyncio.sleep(env_params["MQTT_RECONNECT_INTERVAL"])
 
 
 async def pic_streamer(client, cameras):
