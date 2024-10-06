@@ -274,6 +274,7 @@ class Camera(Device):
             logger.info("picture queue full, ignoring")
 
     def get_status(self):
+        """Returning the camera information"""
         return {"battery": self._arlo.battery_level, "state": self.get_state()}
 
     async def listen_motion(self):

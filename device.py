@@ -25,7 +25,7 @@ class Device(object):
         """
         self.event_loop = asyncio.get_running_loop()
         event_get, event_put = self.create_sync_async_channel()
-        self._arlo.add_attr_callback('*', event_put)
+        self._arlo.add_attr_callback("*", event_put)
         asyncio.create_task(self._periodic_status_trigger())
 
         async for device, attr, value in event_get:
@@ -51,10 +51,12 @@ class Device(object):
             yield self.name, status
             self._state_event.clear()
 
-    def get_status(self):
-        pass
+    def get_status(self) -> dict:
+        """Returning device status"""
+        return {}
 
     async def mqtt_control(self, payload):
+        """MQTT Control handler"""
         pass
 
     def create_sync_async_channel(self):
@@ -74,4 +76,5 @@ class Device(object):
             while True:
                 yield await queue.get()
                 queue.task_done()
+
         return get(), put
