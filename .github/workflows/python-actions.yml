@@ -14,6 +14,7 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:
           black: true
+          version: "~= 24.8"
 
       - name: Bandit
         uses: microsoft/action-python@0.7.0
