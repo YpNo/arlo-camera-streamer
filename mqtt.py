@@ -9,16 +9,18 @@ import aiomqtt  # pylint: disable=import-error
 from aiostream import stream  # pylint: disable=import-error
 from decouple import config  # pylint: disable=import-error
 
-MQTT_BROKER = config("MQTT_BROKER", cast=str, default="localhost")
-MQTT_PORT = config("MQTT_PORT", cast=int, default=1883)
-MQTT_USER = config("MQTT_USER", cast=str, default="arlo")
-MQTT_PASS = config("MQTT_PASS", cast=str, default="arlo")
-MQTT_RECONNECT_INTERVAL = config("MQTT_RECONNECT_INTERVAL", default=5)
-MQTT_TOPIC_PICTURE = config("MQTT_TOPIC_PICTURE", default="arlo/picture/{name}")
-# MQTT_TOPIC_LOCATION = config('MQTT_TOPIC_LOCATION', default='arlo/location')
-MQTT_TOPIC_CONTROL = config("MQTT_TOPIC_CONTROL", default="arlo/control/{name}")
-MQTT_TOPIC_STATUS = config("MQTT_TOPIC_STATUS", default="arlo/status/{name}")
-MQTT_TOPIC_MOTION = config("MQTT_TOPIC_MOTION", default="arlo/motion/{name}")
+# For PyRight issue which doesn't work with decouple
+env_params = {
+    "MQTT_BROKER": config("MQTT_BROKER", cast=str, default="localhost"),
+    "MQTT_PORT": config("MQTT_PORT", cast=int, default=1883),
+    "MQTT_USER": config("MQTT_USER", cast=str, default="arlo"),
+    "MQTT_PASS": config("MQTT_PASS", cast=str, default="arlo"),
+    "MQTT_RECONNECT_INTERVAL": config("MQTT_RECONNECT_INTERVAL", default=5),
+    "MQTT_TOPIC_PICTURE": config("MQTT_TOPIC_PICTURE", default="arlo/picture/{name}"),
+    "MQTT_TOPIC_CONTROL": config("MQTT_TOPIC_CONTROL", default="arlo/control/{name}"),
+    "MQTT_TOPIC_STATUS": config("MQTT_TOPIC_STATUS", default="arlo/status/{name}"),
+    "MQTT_TOPIC_MOTION": config("MQTT_TOPIC_MOTION", default="arlo/motion/{name}"),
+}
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 
@@ -28,19 +30,6 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
-
-# For PyRight issue which doesn't work with decouple
-env_params = {
-    "MQTT_BROKER": MQTT_BROKER,
-    "MQTT_PORT": MQTT_PORT,
-    "MQTT_USER": MQTT_USER,
-    "MQTT_PASS": MQTT_PASS,
-    "MQTT_RECONNECT_INTERVAL": MQTT_RECONNECT_INTERVAL,
-    "MQTT_TOPIC_PICTURE": MQTT_TOPIC_PICTURE,
-    "MQTT_TOPIC_CONTROL": MQTT_TOPIC_CONTROL,
-    "MQTT_TOPIC_STATUS": MQTT_TOPIC_STATUS,
-    "MQTT_TOPIC_MOTION": MQTT_TOPIC_MOTION,
-}
 
 
 async def mqtt_client(cameras, bases):
@@ -77,7 +66,7 @@ async def pic_streamer(client, cameras):
         async for name, data in streamer:
             timestamp = str(time.time()).replace(".", "")
             await client.publish(
-                MQTT_TOPIC_PICTURE.format(name=name),
+                env_params["MQTT_TOPIC_PICTURE"].format(name=name),
                 payload=json.dumps(
                     {
                         "filename": f"{timestamp} {name}.jpg",
@@ -95,7 +84,8 @@ async def device_status(client, devices):
     async with statuses.stream() as streamer:
         async for name, status in streamer:
             await client.publish(
-                MQTT_TOPIC_STATUS.format(name=name), payload=json.dumps(status)
+                env_params["MQTT_TOPIC_STATUS"].format(name=name),
+                payload=json.dumps(status),
             )
 
 
@@ -107,7 +97,8 @@ async def motion_stream(client, cameras):
     async with motion_states.stream() as streamer:
         async for name, motion in streamer:
             await client.publish(
-                MQTT_TOPIC_MOTION.format(name=name), payload=json.dumps(motion)
+                env_params["MQTT_TOPIC_MOTION"].format(name=name),
+                payload=json.dumps(motion),
             )
 
 
@@ -115,7 +106,7 @@ async def mqtt_reader(client, devices):
     """
     Subscribe to control topics, and pass messages to individual cameras
     """
-    devs = {MQTT_TOPIC_CONTROL.format(name=d.name): d for d in devices}
+    devs = {env_params["MQTT_TOPIC_CONTROL"].format(name=d.name): d for d in devices}
     async with client.messages() as messages:
         for name, _ in devs.items():
             await client.subscribe(name)
