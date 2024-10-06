@@ -16,6 +16,8 @@ extend-exclude = '''
 )/
 '''
 
+src = ["."]
+
 [project]
 name = "black"
 description = "The uncompromising code formatter."

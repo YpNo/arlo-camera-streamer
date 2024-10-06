@@ -30,11 +30,13 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:          
           bandit: true
+          bandit-args: "."
 
       - name: Pylint
         uses: microsoft/action-python@0.7.0
         with:
           pylint: true
+          pylint-args: "**/*.py"
           
       - name: Pyright
         uses: microsoft/action-python@0.7.0
@@ -45,6 +47,7 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:          
           flake8: true
+          flake8-args: "."
 
   testing:
     runs-on: ubuntu-latest
@@ -61,3 +64,4 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:          
           testing: true
+          pytest-args: "."
