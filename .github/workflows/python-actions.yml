@@ -22,8 +22,6 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:
           black: true
-          version: "~= 24.8"
-          black-args: "--config pyproject.toml"
           workdir: "."
 
       - name: Bandit
@@ -42,6 +40,7 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:          
           pyright: true
+          workdir: "."
           
       - name: Flake8
         uses: microsoft/action-python@0.7.0
