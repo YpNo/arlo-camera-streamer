@@ -10,11 +10,20 @@ jobs:
   linting:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
       - name: Black
         uses: microsoft/action-python@0.7.0
         with:
           black: true
           version: "~= 24.8"
+          black-args: "--config pyproject.toml"
 
       - name: Bandit
         uses: microsoft/action-python@0.7.0
@@ -38,7 +47,15 @@ jobs:
 
   testing:
     runs-on: ubuntu-latest
-    steps:    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
       - name: Pytest
         uses: microsoft/action-python@0.7.0
         with:          
