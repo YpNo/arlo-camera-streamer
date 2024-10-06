@@ -1,6 +1,4 @@
-[
-tool.black
-]
+[tool.black]
 line-length = 88
 target-version = ['py311']
 include = '\.pyi?$'
@@ -16,6 +14,7 @@ extend-exclude = '''
   | build
   | dist
 )/
+'''
 
 [project]
 name = "black"
