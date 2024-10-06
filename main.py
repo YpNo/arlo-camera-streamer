@@ -1,10 +1,14 @@
-from decouple import config
-import pyaarlo
+"""Arlo Streamer main script."""
+
 import asyncio
 import logging
 import signal
+import pyaarlo  # pylint: disable=import-error
+from decouple import config  # pylint: disable=import-error
+import mqtt
 from camera import Camera
 from base import Base
+
 
 # Read config from ENV
 ARLO_USER = config("ARLO_USER")
@@ -12,7 +16,7 @@ ARLO_PASS = config("ARLO_PASS")
 IMAP_HOST = config("IMAP_HOST")
 IMAP_USER = config("IMAP_USER")
 IMAP_PASS = config("IMAP_PASS")
-MQTT_BROKER = config("MQTT_BROKER", default=None)
+MQTT_BROKER = config("MQTT_BROKER", cast=str, default="fake")
 FFMPEG_OUT = config("FFMPEG_OUT")
 MOTION_TIMEOUT = config("MOTION_TIMEOUT", default=60, cast=int)
 STATUS_INTERVAL = config("STATUS_INTERVAL", default=120, cast=int)
@@ -32,6 +36,8 @@ shutdown_event = asyncio.Event()
 
 
 async def main():
+    """Main function"""
+
     # login to arlo with 2FA
     arlo_args = {
         "username": ARLO_USER,
@@ -66,22 +72,23 @@ async def main():
     ]
 
     # Start both
-    [asyncio.create_task(d.run()) for d in cameras + bases]
+    tasks = [asyncio.create_task(d.run()) for d in cameras + bases]
 
     # Initialize mqtt service
-    if MQTT_BROKER:
-        import mqtt
-
+    if MQTT_BROKER == "fake":
         asyncio.create_task(mqtt.mqtt_client(cameras, bases))
 
     # Graceful shutdown
-    def request_shutdown(signal, frame):
-        logging.info("Shutdown requested...")
+    def request_shutdown(sig, frame):
+        logging.info("%s : %s requested...", frame, sig)
         shutdown_event.set()
 
     # Register callbacks for shutdown
     signal.signal(signal.SIGTERM, request_shutdown)
     signal.signal(signal.SIGINT, request_shutdown)
+
+    # Wait for all tasks to complete before shutting down
+    await asyncio.gather(*tasks)
 
     # Wait for shutdown
     await shutdown_event.wait()

@@ -5,9 +5,9 @@ import json
 import logging
 import asyncio
 import time
-import aiomqtt
-from aiostream import stream
-from decouple import config
+import aiomqtt  # pylint: disable=import-error
+from aiostream import stream  # pylint: disable=import-error
+from decouple import config  # pylint: disable=import-error
 
 DEBUG = config("DEBUG", default=False, cast=bool)
 MQTT_BROKER = config("MQTT_BROKER", cast=str, default="localhost")

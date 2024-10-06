@@ -1,11 +1,11 @@
 """Camera Class to manage Arlo's Camera devices."""
 
-import subprocess
+import subprocess  # nosec B404
 import logging
 import asyncio
 import shlex
 import os
-from decouple import config
+from decouple import config  # pylint: disable=import-error
 from device import Device
 
 DEBUG = config("DEBUG", default=False, cast=bool)

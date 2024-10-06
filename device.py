@@ -1,7 +1,9 @@
+"""Device Class to manage Arlo's Camera devices."""
+
 import asyncio
 
 
-class Device(object):
+class Device:
     """
     Attributes
     ----------
@@ -16,6 +18,7 @@ class Device(object):
         self.name = self._arlo.name.replace(" ", "_").lower()
         self.status_interval = status_interval
         self._state_event = asyncio.Event()
+        self.event_loop = asyncio.get_running_loop()
 
     async def run(self):
         """
@@ -23,7 +26,7 @@ class Device(object):
         Creates event channel between pyaarlo callbacks and async generator.
         Listens for and passes events to handler.
         """
-        self.event_loop = asyncio.get_running_loop()
+
         event_get, event_put = self.create_sync_async_channel()
         self._arlo.add_attr_callback("*", event_put)
         asyncio.create_task(self._periodic_status_trigger())
@@ -32,9 +35,9 @@ class Device(object):
             if device == self._arlo:
                 asyncio.create_task(self.on_event(attr, value))
 
-    # Distributes events to correct handler
     async def on_event(self, attr, value):
-        pass
+        """Distributes events to correct handler"""
+        pass  # pylint: disable=unnecessary-pass
 
     async def _periodic_status_trigger(self):
         while True:
@@ -57,7 +60,7 @@ class Device(object):
 
     async def mqtt_control(self, payload):
         """MQTT Control handler"""
-        pass
+        pass  # pylint: disable=unnecessary-pass
 
     def create_sync_async_channel(self):
         """
