@@ -16,7 +16,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - name: Black
         uses: microsoft/action-python@0.7.0
@@ -57,10 +60,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
       - name: Pytest
         uses: microsoft/action-python@0.7.0
         with:          
           testing: true
-          pytest-args: "."
+          workdir: "."
