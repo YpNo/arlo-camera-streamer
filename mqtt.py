@@ -5,9 +5,13 @@ import json
 import logging
 import asyncio
 import time
-import aiomqtt  # pylint: disable=import-error
-from aiostream import stream  # pylint: disable=import-error
-from decouple import config  # pylint: disable=import-error
+import aiomqtt  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
+from aiostream import (  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
+    stream,
+)
+from decouple import (  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
+    config,
+)
 
 MQTT_BROKER = config("MQTT_BROKER", cast=str, default="localhost")
 MQTT_PORT = config("MQTT_PORT", cast=int, default=1883)
@@ -37,10 +41,10 @@ async def mqtt_client(cameras, bases):
     while True:
         try:
             async with aiomqtt.Client(
-                hostname=MQTT_BROKER,
-                port=MQTT_PORT,
-                username=MQTT_USER,
-                password=MQTT_PASS,
+                hostname=MQTT_BROKER,  # pyright: ignore [reportArgumentType]
+                port=MQTT_PORT,  # pyright: ignore [reportArgumentType]
+                username=MQTT_USER,  # pyright: ignore [reportArgumentType]
+                password=MQTT_PASS,  # pyright: ignore [reportArgumentType]
             ) as client:
                 logger.info("MQTT client connected to %s", MQTT_BROKER)
                 await asyncio.gather(
@@ -64,7 +68,9 @@ async def pic_streamer(client, cameras):
         async for name, data in streamer:
             timestamp = str(time.time()).replace(".", "")
             await client.publish(
-                MQTT_TOPIC_PICTURE.format(name=name),
+                MQTT_TOPIC_PICTURE.format(
+                    name=name
+                ),  # pyright: ignore [reportAttributeAccessIssue]
                 payload=json.dumps(
                     {
                         "filename": f"{timestamp} {name}.jpg",
@@ -82,7 +88,10 @@ async def device_status(client, devices):
     async with statuses.stream() as streamer:
         async for name, status in streamer:
             await client.publish(
-                MQTT_TOPIC_STATUS.format(name=name), payload=json.dumps(status)
+                MQTT_TOPIC_STATUS.format(name=name),
+                payload=json.dumps(
+                    status
+                ),  # pyright: ignore [reportAttributeAccessIssue]
             )
 
 
@@ -94,7 +103,10 @@ async def motion_stream(client, cameras):
     async with motion_states.stream() as streamer:
         async for name, motion in streamer:
             await client.publish(
-                MQTT_TOPIC_MOTION.format(name=name), payload=json.dumps(motion)
+                MQTT_TOPIC_MOTION.format(name=name),
+                payload=json.dumps(
+                    motion
+                ),  # pyright: ignore [reportAttributeAccessIssue]
             )
 
 
@@ -102,7 +114,9 @@ async def mqtt_reader(client, devices):
     """
     Subscribe to control topics, and pass messages to individual cameras
     """
-    devs = {MQTT_TOPIC_CONTROL.format(name=d.name): d for d in devices}
+    devs = {
+        MQTT_TOPIC_CONTROL.format(name=d.name): d for d in devices
+    }  # pyright: ignore [reportAttributeAccessIssue]
     async with client.messages() as messages:
         for name, _ in devs.items():
             await client.subscribe(name)

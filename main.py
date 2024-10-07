@@ -3,8 +3,10 @@
 import asyncio
 import logging
 import signal
-import pyaarlo  # pylint: disable=import-error
-from decouple import config  # pylint: disable=import-error
+import pyaarlo  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
+from decouple import (  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
+    config,
+)
 import mqtt
 from camera import Camera
 from base import Base

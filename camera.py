@@ -5,7 +5,9 @@ import logging
 import asyncio
 import shlex
 import os
-from decouple import config  # pylint: disable=import-error
+from decouple import (  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
+    config,
+)
 from device import Device
 
 DEBUG = config("DEBUG", default=False, cast=bool)
