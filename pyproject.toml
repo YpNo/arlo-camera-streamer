@@ -46,3 +46,6 @@ classifiers = [
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Quality Assurance",
 ]
+
+[tool.setuptools]
+py-modules = []
