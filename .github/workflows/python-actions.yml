@@ -23,7 +23,7 @@ jobs:
         run: |
           python -m venv .venv
           source .venv/bin/activate
-          pip install -r requirements.txt
+          python3 -m pip install -r requirements.txt
 
       - name: Venv in Github Path
         run: echo "$PWD/.venv/bin" >> $GITHUB_PATH

@@ -18,7 +18,7 @@ extend-exclude = '''
 
 [project]
 name = "arlo-camera-streamer"
-dynamic = ["version"]
+dynamic = ["version","readme","dependencies"]
 description = "Continuous streaming for Arlo cameras"
 license = { text = "MIT" }
 requires-python = ">=3.9"
@@ -49,3 +49,7 @@ classifiers = [
 
 [tool.setuptools]
 py-modules = []
+packages = []
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
