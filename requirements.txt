@@ -1,4 +1,4 @@
 pyaarlo @ git+https://github.com/twrecked/pyaarlo
 python-decouple
-aiomqtt==2.0.1
+aiomqtt==1.2.1
 aiostream
