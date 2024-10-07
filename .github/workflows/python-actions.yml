@@ -13,16 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+      #     cache: 'pip'
 
-      - name: Setup venv
+      - name: Install requirements
         run: |
-          python3 -m venv .venv
-          source .venv/bin/activate
           python3 -m pip install -r requirements.txt
 
       - name: Venv in Github Path
@@ -31,30 +29,35 @@ jobs:
       - name: Black
         uses: microsoft/action-python@0.7.0
         with:
+          python_version: '3.12'
           black: true
           workdir: "."
 
       - name: Bandit
         uses: microsoft/action-python@0.7.0
-        with:          
+        with:
+          python_version: '3.12'
           bandit: true
           workdir: "."
 
       - name: Pylint
         uses: microsoft/action-python@0.7.0
         with:
+          python_version: '3.12'
           pylint: true
           workdir: "."
           
       - name: Pyright
         uses: microsoft/action-python@0.7.0
-        with:          
+        with:
+          python_version: '3.12'
           pyright: true
           workdir: "."
           
       - name: Flake8
         uses: microsoft/action-python@0.7.0
-        with:          
+        with:
+          python_version: '3.12'
           flake8: true
           workdir: "."
 
@@ -64,21 +67,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: pip
+      # - name: Set up Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.12'
+      #     cache: pip
 
-      - name: Setup venv
+      - name: Install requirements
         run: |
-          python3 -m venv .venv
-          source .venv/bin/activate
           python3 -m pip install -r requirements.txt
 
       - name: Pytest
         uses: microsoft/action-python@0.7.0
-        with:          
+        with:
+          python_version: '3.12'
           pytest: true
           testdir: "tests/"
           workdir: "."
