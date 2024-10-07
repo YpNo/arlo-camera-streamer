@@ -68,9 +68,9 @@ async def pic_streamer(client, cameras):
         async for name, data in streamer:
             timestamp = str(time.time()).replace(".", "")
             await client.publish(
-                MQTT_TOPIC_PICTURE.format(
+                MQTT_TOPIC_PICTURE.format(  # pyright: ignore [reportAttributeAccessIssue]
                     name=name
-                ),  # pyright: ignore [reportAttributeAccessIssue]
+                ),
                 payload=json.dumps(
                     {
                         "filename": f"{timestamp} {name}.jpg",
@@ -88,10 +88,10 @@ async def device_status(client, devices):
     async with statuses.stream() as streamer:
         async for name, status in streamer:
             await client.publish(
-                MQTT_TOPIC_STATUS.format(name=name),
-                payload=json.dumps(
-                    status
-                ),  # pyright: ignore [reportAttributeAccessIssue]
+                MQTT_TOPIC_STATUS.format(  # pyright: ignore [reportAttributeAccessIssue]
+                    name=name
+                ),
+                payload=json.dumps(status),
             )
 
 
@@ -103,10 +103,10 @@ async def motion_stream(client, cameras):
     async with motion_states.stream() as streamer:
         async for name, motion in streamer:
             await client.publish(
-                MQTT_TOPIC_MOTION.format(name=name),
-                payload=json.dumps(
-                    motion
-                ),  # pyright: ignore [reportAttributeAccessIssue]
+                MQTT_TOPIC_MOTION.format(  # pyright: ignore [reportAttributeAccessIssue]
+                    name=name
+                ),
+                payload=json.dumps(motion),
             )
 
 
@@ -115,8 +115,11 @@ async def mqtt_reader(client, devices):
     Subscribe to control topics, and pass messages to individual cameras
     """
     devs = {
-        MQTT_TOPIC_CONTROL.format(name=d.name): d for d in devices
-    }  # pyright: ignore [reportAttributeAccessIssue]
+        MQTT_TOPIC_CONTROL.format(  # pyright: ignore [reportAttributeAccessIssue]
+            name=d.name
+        ): d
+        for d in devices
+    }
     async with client.messages() as messages:
         for name, _ in devs.items():
             await client.subscribe(name)
