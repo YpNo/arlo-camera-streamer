@@ -1,6 +1,6 @@
-![Main Action](https://github.com/YpNo/actions/workflows/main.yml/badge.svg?event=push)
-
-[![CodeQL](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/codeql.yml/badge.svg)](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/codeql.yml)
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/YpNo/arlo-camera-streamer/python-actions.yml)
+![CodeQL](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/github-code-scanning/codeql/badge.svg)
+![Docker Image CI](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/docker-image.yml/badge.svg)
 
 # arlo-camera-streamer
 
