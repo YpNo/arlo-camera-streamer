@@ -263,7 +263,8 @@ class Camera(Device):
         """
         self._listen_pictures = True
         while True:
-            yield self.name, await self._pictures.get()
+            data = await self._pictures.get()
+            yield self.name, data
             self._pictures.task_done()
 
     def put_picture(self, pic):
