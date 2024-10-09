@@ -73,9 +73,9 @@ jobs:
       #     python-version: '3.12'
       #     cache: pip
 
-      - name: Install requirements
-        run: |
-          python3 -m pip install -r tests/requirements.txt
+      # - name: Install requirements
+      #   run: |
+      #     python3 -m pip install -r tests/requirements.txt
 
       - name: Pytest
         uses: microsoft/action-python@0.7.0

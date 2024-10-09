@@ -2,3 +2,6 @@ pyaarlo @ git+https://github.com/twrecked/pyaarlo
 python-decouple
 aiomqtt==1.2.1
 aiostream
+pytest
+pytest_mock
+pytest-asyncio
