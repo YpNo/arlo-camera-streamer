@@ -2,4 +2,4 @@ pytest
 pytest_mock
 pytest-asyncio
 aiostream
-aiomqtt==1.2.1
+aiomqtt==2.3.0
