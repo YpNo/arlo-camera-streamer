@@ -5,15 +5,21 @@ import asyncio
 
 class Device:
     """
-    Attributes
-    ----------
-    name : str
-        internal name of the device (not necessarily identical to arlo)
-    status_interval: int
-        interval of status messages from generator (seconds)
+    Base class for Arlo devices (cameras and base stations).
+
+    Attributes:
+        name (str): Internal name of the device (not necessarily identical to Arlo).
+        status_interval (int): Interval of status messages from generator (seconds).
     """
 
     def __init__(self, arlo_device, status_interval):
+        """
+        Initialize the Device instance.
+
+        Args:
+            arlo_device (ArloDevice): Arlo device object.
+            status_interval (int): Interval of status messages from generator (seconds).
+        """
         self._arlo = arlo_device
         self.name = self._arlo.name.replace(" ", "_").lower()
         self.status_interval = status_interval
@@ -22,9 +28,13 @@ class Device:
 
     async def run(self):
         """
-        Initializes the Device.
-        Creates event channel between pyaarlo callbacks and async generator.
-        Listens for and passes events to handler.
+        Initialize the device, create event channels, and listen for events.
+
+        This method performs the following tasks:
+        - Creates an event channel between pyaarlo callbacks and async generator.
+        - Adds a callback to the Arlo device for all attributes.
+        - Starts periodic status trigger.
+        - Listens for and passes events to the handler.
         """
 
         event_get, event_put = self.create_sync_async_channel()
@@ -36,17 +46,29 @@ class Device:
                 asyncio.create_task(self.on_event(attr, value))
 
     async def on_event(self, attr, value):
-        """Distributes events to correct handler"""
+        """
+        Distribute events to the correct handler.
+
+        This method should be overridden by subclasses to handle specific events.
+
+        Args:
+            attr (str): Attribute name.
+            value: Attribute value.
+        """
         pass  # pylint: disable=unnecessary-pass
 
     async def _periodic_status_trigger(self):
+        """Periodically trigger status updates."""
         while True:
             self._state_event.set()
             await asyncio.sleep(self.status_interval)
 
     async def listen_status(self):
         """
-        Async generator, periodically yields status messages for mqtt
+        Async generator that periodically yields status messages for MQTT.
+
+        Yields:
+            tuple: (name, status) where name is the device name and status is the device status.
         """
         while True:
             await self._state_event.wait()
@@ -55,20 +77,34 @@ class Device:
             self._state_event.clear()
 
     def get_status(self) -> dict:
-        """Returning device status"""
+        """
+        Get the device status.
+
+        This method should be overridden by subclasses to provide device-specific status.
+
+        Returns:
+            dict: Device status information.
+        """
         return {}
 
     async def mqtt_control(self, payload):
-        """MQTT Control handler"""
+        """
+        Handle MQTT control messages.
+
+        This method should be overridden by subclasses to handle device-specific MQTT controls.
+
+        Args:
+            payload (str): MQTT payload.
+        """
         pass  # pylint: disable=unnecessary-pass
 
     def create_sync_async_channel(self):
         """
-        Sync/Async channel
+        Create a synchronous/asynchronous channel for event communication.
 
-            Returns:
-                get(): async generator, yields queued data
-                put: function used in sync callbacks
+        Returns:
+            tuple: (get, put) where get is an async generator that yields queued data,
+                and put is a function used in synchronous callbacks to put data into the queue.
         """
         queue = asyncio.Queue()
 
