@@ -22,18 +22,14 @@ logger = logging.getLogger(__name__)
 
 class Camera(Device):
     """
-    Attributes
-    ----------
-    name : str
-        internal name of the camera (not necessarily identical to arlo)
-    ffmpeg_out : str
-        ffmpeg output string
-    timeout: int
-        motion timeout of live stream (seconds)
-    status_interval: int
-        interval of status messages from generator (seconds)
-    stream: asyncio.subprocess.Process
-        current ffmpeg stream (idle or active)
+    Class representing an Arlo camera device.
+
+    Attributes:
+        name (str): Internal name of the camera (not necessarily identical to Arlo).
+        ffmpeg_out (str): FFmpeg output string.
+        timeout (int): Motion timeout of live stream (seconds).
+        status_interval (int): Interval of status messages from generator (seconds).
+        stream (asyncio.subprocess.Process): Current FFmpeg stream (idle or active).
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -42,7 +38,18 @@ class Camera(Device):
     STATES = ["idle", "streaming"]
 
     def __init__(self, arlo_camera, ffmpeg_out, motion_timeout, status_interval):
+        """
+        Initialize the Camera instance.
+
+        Args:
+            arlo_camera (ArloCamera): Arlo camera object.
+            ffmpeg_out (str): FFmpeg output string.
+            motion_timeout (int): Motion timeout of live stream (seconds).
+            status_interval (int): Interval of status messages from generator (seconds).
+        """
+
         super().__init__(arlo_camera, status_interval)
+        self.name = arlo_camera.name.replace(" ", "_").lower()
         self.ffmpeg_out = shlex.split(ffmpeg_out.format(name=self.name))
         self.timeout = motion_timeout
         self._timeout_task = None
@@ -58,10 +65,10 @@ class Camera(Device):
 
     async def run(self):
         """
-        Starts the camera, waits indefinitely for camera to become available.
-        Creates event channel between pyaarlo callbacks and async generator.
-        Listens for and passes events to handler.
+        Start the camera, wait for it to become available, create event channels,
+        and listen for events.
         """
+
         while self._arlo.is_unavailable:
             await asyncio.sleep(5)
         await self.set_state("idle")
@@ -70,6 +77,13 @@ class Camera(Device):
 
     # Distributes events to correct handler
     async def on_event(self, attr, value):
+        """
+        Distribute events to the correct handler.
+
+        Args:
+            attr (str): Attribute name.
+            value: Attribute value.
+        """
         match attr:
             case "motionDetected":
                 await self.on_motion(value)
@@ -84,8 +98,10 @@ class Camera(Device):
     # Activates stream on motion
     async def on_motion(self, motion):
         """
-        Handles motion events. Either starts live stream or resets
-        live stream timeout.
+        Handle motion events. Either start live stream or reset live stream timeout.
+
+        Args:
+            motion (bool): Motion detected status.
         """
         self.motion = motion
         self._motion_event.set()
@@ -101,8 +117,10 @@ class Camera(Device):
 
     async def on_arlo_state(self, state):
         """
-        Handles pyaarlo state change, either requests stream or handles
-        running stream.
+        Handle pyaarlo state change, either request stream or handle running stream.
+
+        Args:
+            state (str): Arlo state.
         """
         if state == "idle":
             if self.get_state() == "streaming":
@@ -113,8 +131,11 @@ class Camera(Device):
     # Set state in accordance to STATES
     async def set_state(self, new_state):
         """
-        Setting the local state when pyaarlo state change.
-        Calling the _on_state_change function if the state has changed.
+        Set the local state when pyaarlo state changes.
+        Call the _on_state_change function if the state has changed.
+
+        Args:
+            new_state (str): New state.
         """
         if new_state in self.STATES and new_state != self._state:
             self._state = new_state
@@ -122,11 +143,22 @@ class Camera(Device):
             await self._on_state_change(new_state)
 
     def get_state(self):
-        """Retrun the current state."""
+        """
+        Get the current state.
+
+        Returns:
+            str: Current state.
+        """
         return self._state
 
     # Handle internal state change, stop or start stream
     async def _on_state_change(self, new_state):
+        """
+        Handle internal state change, stop or start stream.
+
+        Args:
+            new_state (str): New state.
+        """
         self._state_event.set()
         match new_state:
             case "idle":
@@ -137,10 +169,7 @@ class Camera(Device):
                 await self._start_stream()
 
     async def _start_proxy_stream(self):
-        """
-        Start proxy stream. This is the continous video
-        stream being sent from ffmpeg.
-        """
+        """Start the proxy stream (continuous video stream from FFmpeg)."""
         exit_code = 1
         while exit_code > 0:
             self.proxy_stream = await asyncio.create_subprocess_exec(
@@ -164,9 +193,7 @@ class Camera(Device):
                 await asyncio.sleep(3)
 
     async def _start_idle_stream(self):
-        """
-        Start idle picture, writing to the proxy stream
-        """
+        """Start the idle picture stream, writing to the proxy stream."""
         exit_code = 1
         while exit_code > 0:
             self.stream = await asyncio.create_subprocess_exec(
@@ -211,8 +238,8 @@ class Camera(Device):
 
     async def _start_stream(self):
         """
-        Request stream, grab it, kill idle stream and start new ffmpeg instance
-        writing to proxy.
+        Request stream, grab it, kill idle stream, and start a new FFmpeg instance
+        writing to the proxy stream.
         """
         stream = await self.event_loop.run_in_executor(None, self._arlo.get_stream)
         if stream:
@@ -244,13 +271,12 @@ class Camera(Device):
                 asyncio.create_task(self._log_stderr(self.stream, "live_stream"))
 
     async def _stream_timeout(self):
+        """Timeout the live stream after the specified duration."""
         await asyncio.sleep(self.timeout)
         await self.set_state("idle")
 
     def stop_stream(self):
-        """
-        Stop live or idle stream (not proxy stream)
-        """
+        """Stop the live or idle stream (not the proxy stream)."""
         if self.stream:
             try:
                 self.stream.kill()
@@ -259,7 +285,10 @@ class Camera(Device):
 
     async def get_pictures(self):
         """
-        Async generator, yields snapshots from pyaarlo
+        Async generator that yields snapshots from pyaarlo.
+
+        Yields:
+            tuple: (name, data) where name is the camera name and data is the picture data.
         """
         self._listen_pictures = True
         while True:
@@ -269,7 +298,10 @@ class Camera(Device):
 
     def put_picture(self, pic):
         """
-        Put picture into the queue
+        Put a picture into the queue.
+
+        Args:
+            pic: Picture data.
         """
         try:
             self._pictures.put_nowait(pic)
@@ -277,12 +309,20 @@ class Camera(Device):
             logger.info("picture queue full, ignoring")
 
     def get_status(self):
-        """Returning the camera information"""
+        """
+        Get the camera status information.
+
+        Returns:
+            dict: Camera status information.
+        """
         return {"battery": self._arlo.battery_level, "state": self.get_state()}
 
     async def listen_motion(self):
         """
-        Async generator, yields motion state on change
+        Async generator that yields motion state on change.
+
+        Yields:
+            tuple: (name, motion) where name is the camera name and motion is the motion state.
         """
         while True:
             await self._motion_event.wait()
@@ -291,7 +331,10 @@ class Camera(Device):
 
     async def mqtt_control(self, payload):
         """
-        Handles incoming MQTT commands
+        Handle incoming MQTT commands.
+
+        Args:
+            payload (str): MQTT payload.
         """
         match payload.upper():
             case "START":
@@ -304,6 +347,10 @@ class Camera(Device):
     async def _log_stderr(self, stream, label):
         """
         Continuously read from stderr and log the output.
+
+        Args:
+            stream: Stream to read from.
+            label (str): Label for logging.
         """
         while True:
             try:
@@ -316,9 +363,7 @@ class Camera(Device):
                 pass
 
     async def shutdown_when_idle(self):
-        """
-        Shutdown camera, wait for idle
-        """
+        """Shutdown the camera when it becomes idle."""
         if self.get_state() != "idle":
             logger.info("%s active, waiting...", self.name)
             while self.get_state() != "idle":
@@ -326,9 +371,7 @@ class Camera(Device):
         self.shutdown()
 
     def shutdown(self):
-        """
-        Immediate shutdown
-        """
+        """Immediate shutdown of the camera."""
         logger.info("Shutting down %s", self.name)
         for stream in [self.stream, self.proxy_stream]:
             if stream:  # Check if stream exists
