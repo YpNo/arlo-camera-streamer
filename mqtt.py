@@ -36,7 +36,11 @@ logger = logging.getLogger(__name__)
 
 async def mqtt_client(cameras, bases):
     """
-    Async mqtt client, initiaties various generators and readers
+    Async MQTT client that initiates various generators and readers.
+
+    Args:
+        cameras (list): List of Camera objects.
+        bases (list): List of Base objects.
     """
     while True:
         try:
@@ -61,7 +65,11 @@ async def mqtt_client(cameras, bases):
 
 async def pic_streamer(client, cameras):
     """
-    Merge picture streams from all cameras and publish to MQTT
+    Merge picture streams from all cameras and publish to MQTT.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        cameras (list): List of Camera objects.
     """
     pics = stream.merge(*[c.get_pictures() for c in cameras])
     async with pics.stream() as streamer:
@@ -82,7 +90,11 @@ async def pic_streamer(client, cameras):
 
 async def device_status(client, devices):
     """
-    Merge device status from all devices and publish to MQTT
+    Merge device status from all devices and publish to MQTT.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        devices (list): List of Device objects (cameras and bases).
     """
     statuses = stream.merge(*[d.listen_status() for d in devices])
     async with statuses.stream() as streamer:
@@ -97,7 +109,11 @@ async def device_status(client, devices):
 
 async def motion_stream(client, cameras):
     """
-    Merge motion events from all cameras and publish to MQTT
+    Merge motion events from all cameras and publish to MQTT.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        cameras (list): List of Camera objects.
     """
     motion_states = stream.merge(*[c.listen_motion() for c in cameras])
     async with motion_states.stream() as streamer:
@@ -112,7 +128,11 @@ async def motion_stream(client, cameras):
 
 async def mqtt_reader(client, devices):
     """
-    Subscribe to control topics, and pass messages to individual cameras
+    Subscribe to control topics and pass messages to individual devices.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        devices (list): List of Device objects (cameras and bases).
     """
     devs = {
         MQTT_TOPIC_CONTROL.format(  # pyright: ignore [reportAttributeAccessIssue]
