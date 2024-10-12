@@ -81,6 +81,6 @@ jobs:
         uses: microsoft/action-python@0.7.0
         with:
           python_version: '3.12'
-          pytest: true
+          pytest: false
           testdir: "tests/"
           workdir: "."

@@ -12,7 +12,7 @@ class Device:
         status_interval (int): Interval of status messages from generator (seconds).
     """
 
-    def __init__(self, arlo_device, status_interval):
+    def __init__(self, arlo_device, status_interval: int):
         """
         Initialize the Device instance.
 
@@ -24,7 +24,7 @@ class Device:
         self.name = self._arlo.name.replace(" ", "_").lower()
         self.status_interval = status_interval
         self._state_event = asyncio.Event()
-        self.event_loop = asyncio.get_running_loop()
+        self._event_loop = asyncio.get_running_loop()
 
     async def run(self):
         """
@@ -36,16 +36,15 @@ class Device:
         - Starts periodic status trigger.
         - Listens for and passes events to the handler.
         """
-
         event_get, event_put = self.create_sync_async_channel()
         self._arlo.add_attr_callback("*", event_put)
-        asyncio.create_task(self._periodic_status_trigger())
+        asyncio.create_task(self.periodic_status_trigger())
 
         async for device, attr, value in event_get:
             if device == self._arlo:
                 asyncio.create_task(self.on_event(attr, value))
 
-    async def on_event(self, attr, value):
+    async def on_event(self, attr: str, value):
         """
         Distribute events to the correct handler.
 
@@ -57,10 +56,10 @@ class Device:
         """
         pass  # pylint: disable=unnecessary-pass
 
-    async def _periodic_status_trigger(self):
+    async def periodic_status_trigger(self):
         """Periodically trigger status updates."""
         while True:
-            self._state_event.set()
+            self.state_event.set()
             await asyncio.sleep(self.status_interval)
 
     async def listen_status(self):
@@ -71,10 +70,10 @@ class Device:
             tuple: (name, status) where name is the device name and status is the device status.
         """
         while True:
-            await self._state_event.wait()
+            await self.state_event.wait()
             status = self.get_status()
             yield self.name, status
-            self._state_event.clear()
+            self.state_event.clear()
 
     def get_status(self) -> dict:
         """
@@ -87,7 +86,7 @@ class Device:
         """
         return {}
 
-    async def mqtt_control(self, payload):
+    async def mqtt_control(self, payload: str):
         """
         Handle MQTT control messages.
 
@@ -109,7 +108,7 @@ class Device:
         queue = asyncio.Queue()
 
         def put(*args):
-            self.event_loop.call_soon_threadsafe(queue.put_nowait, args)
+            self._event_loop.call_soon_threadsafe(queue.put_nowait, args)
 
         async def get():
             while True:
@@ -117,3 +116,23 @@ class Device:
                 queue.task_done()
 
         return get(), put
+
+    @property
+    def state_event(self):
+        """
+        Get the state event object.
+
+        Returns:
+            asyncio.Event: The state event object.
+        """
+        return self._state_event
+
+    @property
+    def event_loop(self):
+        """
+        Get the event loop object.
+
+        Returns:
+            asyncio.AbstractEventLoop: The event loop object.
+        """
+        return self._event_loop

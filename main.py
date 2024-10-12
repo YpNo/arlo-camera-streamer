@@ -19,7 +19,7 @@ IMAP_HOST = config("IMAP_HOST")
 IMAP_USER = config("IMAP_USER")
 IMAP_PASS = config("IMAP_PASS")
 MQTT_BROKER = config("MQTT_BROKER", cast=str, default="fake")
-FFMPEG_OUT = config("FFMPEG_OUT")
+FFMPEG_OUT = config("FFMPEG_OUT", cast=str, default="")
 MOTION_TIMEOUT = config("MOTION_TIMEOUT", default=60, cast=int)
 STATUS_INTERVAL = config("STATUS_INTERVAL", default=120, cast=int)
 DEBUG = config("DEBUG", default=False, cast=bool)
@@ -38,7 +38,15 @@ shutdown_event = asyncio.Event()
 
 
 async def main():
-    """Main function"""
+    """
+    Main function that initializes the Arlo Streamer.
+
+    This function performs the following tasks:
+    - Logs in to Arlo with 2FA.
+    - Initializes Base Stations and Cameras.
+    - Starts the devices and MQTT service.
+    - Handles graceful shutdown.
+    """
 
     # login to arlo with 2FA
     arlo_args = {
@@ -70,7 +78,13 @@ async def main():
 
     # Initialize cameras
     cameras = [
-        Camera(c, FFMPEG_OUT, MOTION_TIMEOUT, STATUS_INTERVAL) for c in arlo.cameras
+        Camera(
+            c,
+            FFMPEG_OUT,  # pyright: ignore [reportArgumentType]
+            MOTION_TIMEOUT,
+            STATUS_INTERVAL,
+        )
+        for c in arlo.cameras
     ]
 
     # Start both

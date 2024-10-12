@@ -5,9 +5,7 @@ import logging
 import asyncio
 import shlex
 import os
-from decouple import (  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
-    config,
-)
+from decouple import config
 from device import Device
 
 DEBUG = config("DEBUG", default=False, cast=bool)
@@ -33,11 +31,14 @@ class Camera(Device):
     """
 
     # pylint: disable=too-many-instance-attributes
+    # pylint: disable=too-many-public-methods
 
     # Possible states
     STATES = ["idle", "streaming"]
 
-    def __init__(self, arlo_camera, ffmpeg_out, motion_timeout, status_interval):
+    def __init__(
+        self, arlo_camera, ffmpeg_out: str, motion_timeout: int, status_interval: int
+    ):
         """
         Initialize the Camera instance.
 
@@ -47,7 +48,6 @@ class Camera(Device):
             motion_timeout (int): Motion timeout of live stream (seconds).
             status_interval (int): Interval of status messages from generator (seconds).
         """
-
         super().__init__(arlo_camera, status_interval)
         self.name = arlo_camera.name.replace(" ", "_").lower()
         self.ffmpeg_out = shlex.split(ffmpeg_out.format(name=self.name))
@@ -68,15 +68,13 @@ class Camera(Device):
         Start the camera, wait for it to become available, create event channels,
         and listen for events.
         """
-
         while self._arlo.is_unavailable:
             await asyncio.sleep(5)
         await self.set_state("idle")
-        asyncio.create_task(self._start_proxy_stream())
+        asyncio.create_task(self.start_proxy_stream())
         await super().run()
 
-    # Distributes events to correct handler
-    async def on_event(self, attr, value):
+    async def on_event(self, attr: str, value):
         """
         Distribute events to the correct handler.
 
@@ -95,8 +93,7 @@ class Camera(Device):
             case _:
                 pass
 
-    # Activates stream on motion
-    async def on_motion(self, motion):
+    async def on_motion(self, motion: bool):
         """
         Handle motion events. Either start live stream or reset live stream timeout.
 
@@ -104,18 +101,17 @@ class Camera(Device):
             motion (bool): Motion detected status.
         """
         self.motion = motion
-        self._motion_event.set()
+        self.motion_event.set()
         logger.info("%s motion: %s", self.name, motion)
         if motion:
             await self.set_state("streaming")
-
         else:
             if self._timeout_task:
                 self._timeout_task.cancel()
             if not motion:
-                self._timeout_task = asyncio.create_task(self._stream_timeout())
+                self._timeout_task = asyncio.create_task(self.stream_timeout())
 
-    async def on_arlo_state(self, state):
+    async def on_arlo_state(self, state: str):
         """
         Handle pyaarlo state change, either request stream or handle running stream.
 
@@ -124,12 +120,11 @@ class Camera(Device):
         """
         if state == "idle":
             if self.get_state() == "streaming":
-                await self._start_stream()
+                await self.start_stream()
         elif state == "userStreamActive" and self.get_state() != "streaming":
             await self.set_state("streaming")
 
-    # Set state in accordance to STATES
-    async def set_state(self, new_state):
+    async def set_state(self, new_state: str):
         """
         Set the local state when pyaarlo state changes.
         Call the _on_state_change function if the state has changed.
@@ -140,7 +135,7 @@ class Camera(Device):
         if new_state in self.STATES and new_state != self._state:
             self._state = new_state
             logger.info("%s state: %s", self.name, new_state)
-            await self._on_state_change(new_state)
+            await self.on_state_change(new_state)
 
     def get_state(self):
         """
@@ -151,24 +146,22 @@ class Camera(Device):
         """
         return self._state
 
-    # Handle internal state change, stop or start stream
-    async def _on_state_change(self, new_state):
+    async def on_state_change(self, new_state: str):
         """
         Handle internal state change, stop or start stream.
 
         Args:
             new_state (str): New state.
         """
-        self._state_event.set()
+        self.state_event.set()
         match new_state:
             case "idle":
                 self.stop_stream()
-                asyncio.create_task(self._start_idle_stream())
-
+                asyncio.create_task(self.start_idle_stream())
             case "streaming":
-                await self._start_stream()
+                await self.start_stream()
 
-    async def _start_proxy_stream(self):
+    async def start_proxy_stream(self):
         """Start the proxy stream (continuous video stream from FFmpeg)."""
         exit_code = 1
         while exit_code > 0:
@@ -180,7 +173,7 @@ class Camera(Device):
             )
 
             if DEBUG:
-                asyncio.create_task(self._log_stderr(self.proxy_stream, "proxy_stream"))
+                asyncio.create_task(self.log_stderr(self.proxy_stream, "proxy_stream"))
 
             exit_code = await self.proxy_stream.wait()
 
@@ -192,7 +185,7 @@ class Camera(Device):
                 )
                 await asyncio.sleep(3)
 
-    async def _start_idle_stream(self):
+    async def start_idle_stream(self):
         """Start the idle picture stream, writing to the proxy stream."""
         exit_code = 1
         while exit_code > 0:
@@ -224,7 +217,7 @@ class Camera(Device):
             )
 
             if DEBUG:
-                asyncio.create_task(self._log_stderr(self.stream, "idle_stream"))
+                asyncio.create_task(self.log_stderr(self.stream, "idle_stream"))
 
             exit_code = await self.stream.wait()
 
@@ -236,7 +229,7 @@ class Camera(Device):
                 )
                 await asyncio.sleep(3)
 
-    async def _start_stream(self):
+    async def start_stream(self):
         """
         Request stream, grab it, kill idle stream, and start a new FFmpeg instance
         writing to the proxy stream.
@@ -268,9 +261,9 @@ class Camera(Device):
             )
 
             if DEBUG:
-                asyncio.create_task(self._log_stderr(self.stream, "live_stream"))
+                asyncio.create_task(self.log_stderr(self.stream, "live_stream"))
 
-    async def _stream_timeout(self):
+    async def stream_timeout(self):
         """Timeout the live stream after the specified duration."""
         await asyncio.sleep(self.timeout)
         await self.set_state("idle")
@@ -308,7 +301,7 @@ class Camera(Device):
         except asyncio.QueueFull:
             logger.info("picture queue full, ignoring")
 
-    def get_status(self):
+    def get_status(self) -> dict:
         """
         Get the camera status information.
 
@@ -325,11 +318,11 @@ class Camera(Device):
             tuple: (name, motion) where name is the camera name and motion is the motion state.
         """
         while True:
-            await self._motion_event.wait()
+            await self.motion_event.wait()
             yield self.name, self.motion
-            self._motion_event.clear()
+            self.motion_event.clear()
 
-    async def mqtt_control(self, payload):
+    async def mqtt_control(self, payload: str):
         """
         Handle incoming MQTT commands.
 
@@ -344,7 +337,7 @@ class Camera(Device):
             case "SNAPSHOT":
                 await self.event_loop.run_in_executor(None, self._arlo.request_snapshot)
 
-    async def _log_stderr(self, stream, label):
+    async def log_stderr(self, stream, label: str):
         """
         Continuously read from stderr and log the output.
 
@@ -383,3 +376,23 @@ class Camera(Device):
                 except AttributeError:
                     # Handle the case when stream is None
                     logger.debug("Stream for %s is not initialized.", self.name)
+
+    @property
+    def state_event(self):
+        """
+        Get the state event object.
+
+        Returns:
+            asyncio.Event: The state event object.
+        """
+        return self._state_event
+
+    @property
+    def motion_event(self):
+        """
+        Get the motion event object.
+
+        Returns:
+            asyncio.Event: The motion event object.
+        """
+        return self._motion_event

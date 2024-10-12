@@ -3,5 +3,5 @@ python-decouple
 aiomqtt==1.2.1
 aiostream
 pytest
-pytest_mock
+pytest-mock
 pytest-asyncio

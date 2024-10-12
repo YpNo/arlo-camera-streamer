@@ -14,7 +14,7 @@ class Base(Device):
         status_interval (int): Interval of status messages from generator (seconds).
     """
 
-    def __init__(self, arlo_base, status_interval):
+    def __init__(self, arlo_base, status_interval: int):
         """
         Initialize the Base instance.
 
@@ -25,8 +25,7 @@ class Base(Device):
         super().__init__(arlo_base, status_interval)
         logging.info("Base added: %s", self.name)
 
-    # Distributes events to correct handler
-    async def on_event(self, attr, value):
+    async def on_event(self, attr: str, value):
         """
         Distribute events to the correct handler.
 
@@ -36,12 +35,12 @@ class Base(Device):
         """
         match attr:
             case "activeMode":
-                self._state_event.set()
+                self.state_event.set()
                 logging.info("%s mode: %s", self.name, value)
             case _:
                 pass
 
-    def get_status(self):
+    def get_status(self) -> dict:
         """
         Get the status of the base station.
 
@@ -50,7 +49,7 @@ class Base(Device):
         """
         return {"mode": self._arlo.mode, "siren": self._arlo.siren_state}
 
-    async def mqtt_control(self, payload):
+    async def mqtt_control(self, payload: str):
         """
         Handle incoming MQTT commands.
 
@@ -63,11 +62,11 @@ class Base(Device):
             payload = json.loads(payload)
             for k, v in payload.items():
                 if k in handlers:
-                    self.event_loop.run_in_executor(None, handlers[k], v)
+                    self._event_loop.run_in_executor(None, handlers[k], v)
         except Exception:
             logging.warning("%s: Invalid data for MQTT control", self.name)
 
-    def set_mode(self, mode):
+    def set_mode(self, mode: str):
         """
         Set the mode of the base station.
 
@@ -101,3 +100,13 @@ class Base(Device):
                     logging.warning("%s: Invalid siren arguments", self.name)
             case _:
                 pass
+
+    @property
+    def state_event(self):
+        """
+        Get the state event object.
+
+        Returns:
+            asyncio.Event: The state event object.
+        """
+        return self._state_event
