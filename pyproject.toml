@@ -73,4 +73,3 @@ ignore = [
 
 [tool.flake8]
 max-line-length = 130
-exclude = tests/*
