@@ -60,3 +60,4 @@ asyncio_default_fixture_loop_scope = "function"
 
 [tool.pylint.MASTER]
 ignore-paths = '^tests/.*$'
+max-line-length=130
