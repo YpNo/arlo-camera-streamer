@@ -141,6 +141,8 @@ async def mqtt_reader(client: aiomqtt.Client, devices: list):
             if message.topic.value in devs:
                 asyncio.create_task(
                     devs[message.topic.value].mqtt_control(
-                        message.payload.decode("utf-8")
+                        message.payload.decode(  # pyright: ignore [reportAttributeAccessIssue,reportOptionalMemberAccess]
+                            "utf-8"
+                        )
                     )
                 )

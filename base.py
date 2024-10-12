@@ -60,7 +60,7 @@ class Base(Device):
 
         try:
             payload = json.loads(payload)
-            for k, v in payload.items():
+            for k, v in payload.items():  # pyright: ignore [reportAttributeAccessIssue]
                 if k in handlers:
                     self._event_loop.run_in_executor(None, handlers[k], v)
         except Exception:

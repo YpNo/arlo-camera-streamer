@@ -7,7 +7,11 @@
     "executionEnvironments": [
         {
             "root": ".",
-            "reportMissingImports": "warning"
+            "reportMissingImports": "warning",
+            "exclude": [
+                "**/__pycache__",
+                "**/tests"
+            ],
         }
     ]
 }
