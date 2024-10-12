@@ -129,10 +129,7 @@ async def mqtt_reader(client: aiomqtt.Client, devices: list):
         devices (list): List of Device objects (cameras and bases).
     """
     devs = {
-        MQTT_TOPIC_CONTROL.format(  # pyright: ignore [reportAttributeAccessIssue]
-            name=d.name
-        ): d
-        for d in devices
+        MQTT_TOPIC_CONTROL.format(name=d.name): d for d in devices # pyright: ignore [reportAttributeAccessIssue]
     }
     async with client.messages() as messages:
         for name, _ in devs.items():
