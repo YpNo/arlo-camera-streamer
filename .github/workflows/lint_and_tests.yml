@@ -19,9 +19,9 @@ jobs:
       #     python-version: '3.12'
       #     cache: 'pip'
 
-      # - name: Install requirements
-      #   run: |
-      #     python3 -m pip install -r requirements.txt
+      - name: Install requirements
+        run: |
+          python3 -m pip install -r requirements.txt
 
       # - name: Venv in Github Path
       #   run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
