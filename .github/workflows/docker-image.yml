@@ -1,18 +1,14 @@
 name: Docker Image CI
 
 on:
-  # push:
-  #   branches: [ "main" ]
-  push:
-    tags:
-      - "v*.*.*"
-  # pull_request:
-  #   branches: [ "main" ]
-  # release:
-    # types: [published]
+  pull_request:
+    branches: 
+      - main
+    types: [closed]
 
 jobs:
   docker:
+    if: ${{ github.event.pull_request.merged }}
     runs-on: ubuntu-latest
     steps:
       - name: Docker meta

@@ -9,3 +9,7 @@ updates:
     directory: "." # Location of package manifests
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "aiomqtt"
+        # For Express, ignore all Dependabot updates for version 4 and 5
+        versions: ["2.3.x"]
