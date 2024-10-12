@@ -88,7 +88,9 @@ async def main():
     ]
 
     # Start both
+    # fmt: off
     tasks = [asyncio.create_task(d.run()) for d in cameras + bases]
+    # fmt: on
 
     # Initialize mqtt service
     if MQTT_BROKER == "fake":

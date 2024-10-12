@@ -189,6 +189,7 @@ class Camera(Device):
         """Start the idle picture stream, writing to the proxy stream."""
         exit_code = 1
         while exit_code > 0:
+            # fmt: off
             self.stream = await asyncio.create_subprocess_exec(
                 *[
                     "ffmpeg", "-re", "-stream_loop", "-1",
@@ -201,6 +202,7 @@ class Camera(Device):
                 stdout=self.proxy_writer,
                 stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL,
             )
+            # fmt: on
 
             if DEBUG:
                 asyncio.create_task(self.log_stderr(self.stream, "idle_stream"))
@@ -224,6 +226,7 @@ class Camera(Device):
         if stream:
             self.stop_stream()
 
+            # fmt: off
             self.stream = await asyncio.create_subprocess_exec(
                 *[
                     "ffmpeg", "-i", stream,
@@ -235,6 +238,7 @@ class Camera(Device):
                 stdout=self.proxy_writer,
                 stderr=subprocess.PIPE if DEBUG else subprocess.DEVNULL,
             )
+            # fmt: on
 
             if DEBUG:
                 asyncio.create_task(self.log_stderr(self.stream, "live_stream"))
