@@ -64,6 +64,13 @@ max-line-length=130
 
 [tool.pyright]
 exclude = ["**/node_modules",
-    "**/__pycache__",
-    "**/tests"
+  "**/__pycache__",
+  "**/tests"
 ]
+ignore = [
+  "**/tests"
+]
+
+[tool.flake8]
+max-line-length = 130
+exclude = tests/*
