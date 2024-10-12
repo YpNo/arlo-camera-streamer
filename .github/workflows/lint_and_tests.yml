@@ -1,4 +1,4 @@
-name: Python Actions
+name: Lint and Tests
 on:
   push:
     branches: [ main ]
@@ -23,8 +23,8 @@ jobs:
         run: |
           python3 -m pip install -r requirements.txt
 
-      - name: Venv in Github Path
-        run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      # - name: Venv in Github Path
+      #   run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: Black
         uses: microsoft/action-python@0.7.0
