@@ -1,13 +1,13 @@
 {
     "exclude": [
         "**/__pycache__",
-        "tests/"
+        "**/tests"
     ],
     "reportMissingImports": "warning",
     "executionEnvironments": [
         {
             "root": ".",
-            "reportMissingImports": "warning"
+            "reportMissingImports": "warning",
         }
     ]
 }

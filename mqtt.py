@@ -5,13 +5,9 @@ import json
 import logging
 import asyncio
 import time
-import aiomqtt  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
-from aiostream import (  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
-    stream,
-)
-from decouple import (  # pylint: disable=import-error # pyright: ignore [reportMissingImports]
-    config,
-)
+import aiomqtt
+from aiostream import stream
+from decouple import config
 
 MQTT_BROKER = config("MQTT_BROKER", cast=str, default="localhost")
 MQTT_PORT = config("MQTT_PORT", cast=int, default=1883)
@@ -19,7 +15,6 @@ MQTT_USER = config("MQTT_USER", cast=str, default="arlo")
 MQTT_PASS = config("MQTT_PASS", cast=str, default="arlo")
 MQTT_RECONNECT_INTERVAL = config("MQTT_RECONNECT_INTERVAL", default=5)
 MQTT_TOPIC_PICTURE = config("MQTT_TOPIC_PICTURE", default="arlo/picture/{name}")
-# MQTT_TOPIC_LOCATION = config('MQTT_TOPIC_LOCATION', default='arlo/location')
 MQTT_TOPIC_CONTROL = config("MQTT_TOPIC_CONTROL", default="arlo/control/{name}")
 MQTT_TOPIC_STATUS = config("MQTT_TOPIC_STATUS", default="arlo/status/{name}")
 MQTT_TOPIC_MOTION = config("MQTT_TOPIC_MOTION", default="arlo/motion/{name}")
@@ -34,9 +29,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def mqtt_client(cameras, bases):
+async def mqtt_client(cameras: list, bases: list):
     """
-    Async mqtt client, initiaties various generators and readers
+    Async MQTT client that initiates various generators and readers.
+
+    Args:
+        cameras (list): List of Camera objects.
+        bases (list): List of Base objects.
     """
     while True:
         try:
@@ -48,7 +47,6 @@ async def mqtt_client(cameras, bases):
             ) as client:
                 logger.info("MQTT client connected to %s", MQTT_BROKER)
                 await asyncio.gather(
-                    # Generators/Readers
                     mqtt_reader(client, cameras + bases),
                     device_status(client, cameras + bases),
                     motion_stream(client, cameras),
@@ -59,9 +57,13 @@ async def mqtt_client(cameras, bases):
             await asyncio.sleep(MQTT_RECONNECT_INTERVAL)
 
 
-async def pic_streamer(client, cameras):
+async def pic_streamer(client: aiomqtt.Client, cameras: list):
     """
-    Merge picture streams from all cameras and publish to MQTT
+    Merge picture streams from all cameras and publish to MQTT.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        cameras (list): List of Camera objects.
     """
     pics = stream.merge(*[c.get_pictures() for c in cameras])
     async with pics.stream() as streamer:
@@ -80,9 +82,13 @@ async def pic_streamer(client, cameras):
             )
 
 
-async def device_status(client, devices):
+async def device_status(client: aiomqtt.Client, devices: list):
     """
-    Merge device status from all devices and publish to MQTT
+    Merge device status from all devices and publish to MQTT.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        devices (list): List of Device objects (cameras and bases).
     """
     statuses = stream.merge(*[d.listen_status() for d in devices])
     async with statuses.stream() as streamer:
@@ -95,9 +101,13 @@ async def device_status(client, devices):
             )
 
 
-async def motion_stream(client, cameras):
+async def motion_stream(client: aiomqtt.Client, cameras: list):
     """
-    Merge motion events from all cameras and publish to MQTT
+    Merge motion events from all cameras and publish to MQTT.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        cameras (list): List of Camera objects.
     """
     motion_states = stream.merge(*[c.listen_motion() for c in cameras])
     async with motion_states.stream() as streamer:
@@ -110,16 +120,19 @@ async def motion_stream(client, cameras):
             )
 
 
-async def mqtt_reader(client, devices):
+async def mqtt_reader(client: aiomqtt.Client, devices: list):
     """
-    Subscribe to control topics, and pass messages to individual cameras
+    Subscribe to control topics and pass messages to individual devices.
+
+    Args:
+        client (aiomqtt.Client): MQTT client instance.
+        devices (list): List of Device objects (cameras and bases).
     """
+    # fmt: off
     devs = {
-        MQTT_TOPIC_CONTROL.format(  # pyright: ignore [reportAttributeAccessIssue]
-            name=d.name
-        ): d
-        for d in devices
+        MQTT_TOPIC_CONTROL.format(name=d.name): d for d in devices # pyright: ignore [reportAttributeAccessIssue]
     }
+    # fmt: on
     async with client.messages() as messages:
         for name, _ in devs.items():
             await client.subscribe(name)
@@ -127,6 +140,8 @@ async def mqtt_reader(client, devices):
             if message.topic.value in devs:
                 asyncio.create_task(
                     devs[message.topic.value].mqtt_control(
-                        message.payload.decode("utf-8")
+                        message.payload.decode(  # pyright: ignore [reportAttributeAccessIssue,reportOptionalMemberAccess]
+                            "utf-8"
+                        )
                     )
                 )

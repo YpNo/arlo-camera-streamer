@@ -57,3 +57,20 @@ dependencies = {file = ["requirements.txt"]}
 [tool.pytest.ini_options]
 pythonpath = ["./", "tests"]
 asyncio_default_fixture_loop_scope = "function"
+
+[tool.pylint.MASTER]
+ignore-paths = '^tests/.*$'
+max-line-length=130
+
+[tool.pyright]
+exclude = ["**/node_modules",
+  "**/__pycache__",
+  "**/tests"
+]
+ignore = [
+  "**/tests"
+]
+
+[tool.flake8]
+max-line-length = 130
+exclude = "tests"

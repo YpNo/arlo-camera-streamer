@@ -1,11 +1,12 @@
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/YpNo/arlo-camera-streamer/python-actions.yml)
 ![CodeQL](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/github-code-scanning/codeql/badge.svg)
 ![Docker Image CI](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/docker-image.yml/badge.svg)
-
-# arlo-camera-streamer
+[![codecov](https://codecov.io/github/YpNo/arlo-camera-streamer/graph/badge.svg?token=1NMSHP7BLW)](https://codecov.io/github/YpNo/arlo-camera-streamer)
 
 > [!IMPORTANT]
 > This is a forked project from [arlo-streamer](https://github.com/kaffetorsk/arlo-streamer) project. Reason : Inactivity
+
+# arlo-camera-streamer
 
 Python script that turns arlo cameras into continuous streams through ffmpeg
 This allow arlo cameras to be used in the NVR of your choosing. (e.g. [Frigate](https://frigate.video/))
