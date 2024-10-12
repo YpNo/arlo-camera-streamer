@@ -61,3 +61,9 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.pylint.MASTER]
 ignore-paths = '^tests/.*$'
 max-line-length=130
+
+[tool.pyright]
+exclude = ["**/node_modules",
+    "**/__pycache__",
+    "**/tests"
+]

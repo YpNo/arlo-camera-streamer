@@ -8,10 +8,6 @@
         {
             "root": ".",
             "reportMissingImports": "warning",
-            "exclude": [
-                "**/__pycache__",
-                "**/tests"
-            ],
         }
     ]
 }
