@@ -93,7 +93,7 @@ async def main():
     # fmt: on
 
     # Initialize mqtt service
-    if MQTT_BROKER == "fake":
+    if MQTT_BROKER != "fake":
         asyncio.create_task(mqtt.mqtt_client(cameras, bases))
 
     # Graceful shutdown
