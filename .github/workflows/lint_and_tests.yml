@@ -1,7 +1,5 @@
 name: Lint and Tests
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -13,18 +11,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # - name: Set up Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '3.12'
-      #     cache: 'pip'
-
       - name: Install requirements
         run: |
           python3 -m pip install -r requirements.txt
-
-      # - name: Venv in Github Path
-      #   run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
 
       - name: Black
         uses: microsoft/action-python@0.7.0
@@ -66,16 +55,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      # - name: Set up Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '3.12'
-      #     cache: pip
-
-      # - name: Install requirements
-      #   run: |
-      #     python3 -m pip install -r tests/requirements.txt
 
       - name: Pytest
         uses: microsoft/action-python@0.7.0

@@ -1,7 +1,11 @@
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/YpNo/arlo-camera-streamer/python-actions.yml)
+![Pipeline](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/lint_and_tests.yml/badge.svg)
 ![CodeQL](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/github-code-scanning/codeql/badge.svg)
 ![Docker Image CI](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/docker-image.yml/badge.svg)
 [![codecov](https://codecov.io/github/YpNo/arlo-camera-streamer/graph/badge.svg?token=1NMSHP7BLW)](https://codecov.io/github/YpNo/arlo-camera-streamer)
+
+![Release](https://img.shields.io/v/release/ypno/arlo-camera-streamer/latest)
+![License](https://img.shields.io/github/license/ypno/arlo-camera-streamer)
+
 
 > [!IMPORTANT]
 > This is a forked project from [arlo-streamer](https://github.com/kaffetorsk/arlo-streamer) project. Reason : Inactivity
@@ -55,7 +59,7 @@ python main.py
 ```
 or
 ```
-docker run -d --env-file .env kaffetorsk/arlo-streamer
+docker run -d --env-file .env ypno/arlo-camera-streamer
 ```
 ### MQTT
 #### Pictures
