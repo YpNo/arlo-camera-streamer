@@ -1,6 +1,6 @@
 services:
   arlo-streamer:
-    image: kaffetorsk/arlo-streamer
+    image: ypno/arlo-caemra-streamer
     restart: unless-stopped
     env_file: .streamer-env
     extra_hosts:
