@@ -3,7 +3,7 @@
 ![Docker Image CI](https://github.com/YpNo/arlo-camera-streamer/actions/workflows/docker-image.yml/badge.svg)
 [![codecov](https://codecov.io/github/YpNo/arlo-camera-streamer/graph/badge.svg?token=1NMSHP7BLW)](https://codecov.io/github/YpNo/arlo-camera-streamer)
 
-![Release](https://img.shields.io/v/release/ypno/arlo-camera-streamer/latest)
+![Release](https://img.shields.io/github/v/release/ypno/arlo-camera-streamer)
 ![License](https://img.shields.io/github/license/ypno/arlo-camera-streamer)
 
 
